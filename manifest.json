@@ -1,0 +1,10 @@
+{
+  "id": "quiz-collector",
+  "name": "Quiz Collector",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Convert markdown notes to interactive quizzes with timer, guessing metrics, and instant review using skewer-format.",
+  "author": "Antigravity",
+  "authorUrl": "https://github.com",
+  "isDesktopOnly": false
+}
