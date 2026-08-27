@@ -11,10 +11,14 @@ export function parseQuizContent(rawContent: string): QuizQuestion[] {
     }
 
     try {
+        // Pre-process: inject --- separators between adjacent TYPE: blocks that lack them.
+        // This ensures that even if the user forgets separators, each question is parsed independently.
+        const preprocessed = injectMissingSeparators(rawContent.trim());
+
         // Ensure input has a sentinel delimiter at the end so skewer-format flushes the last question
-        const sanitizedInput = rawContent.trim().endsWith("---")
-            ? rawContent
-            : `${rawContent}\n\n---`;
+        const sanitizedInput = preprocessed.trim().endsWith("---")
+            ? preprocessed
+            : `${preprocessed}\n\n---`;
 
         const rawResults = skewerToJSON(sanitizedInput);
         const questions: QuizQuestion[] = [];
@@ -70,18 +74,64 @@ export function parseQuizContent(rawContent: string): QuizQuestion[] {
     }
 }
 
+/**
+ * Injects `---` separators between consecutive question/questionset blocks
+ * when a new TYPE: line appears without a preceding separator.
+ *
+ * This is a resilience layer for hand-written quiz content that doesn't
+ * include `---` between questions.
+ */
+function injectMissingSeparators(content: string): string {
+    // Match lines that start a new block: TYPE:, or QUESTION: at top level (not inside a QUESTIONSET sub-block).
+    // Strategy: split into lines, detect when a new TYPE: appears without a --- before it.
+    const lines = content.split("\n");
+    const result: string[] = [];
+
+    // Track whether we've seen any content since the last separator
+    let blockStarted = false;
+    const sepRegex = /^\s*---\s*$/;
+    // A "top-level TYPE" line: begins a brand new question block
+    const typeLineRegex = /^\s*TYPE\s*:\s*\S+/i;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (sepRegex.test(line)) {
+            // Explicit separator — reset block state
+            result.push(line);
+            blockStarted = false;
+            continue;
+        }
+
+        if (typeLineRegex.test(line)) {
+            // Starting a new type block. If we already have a block started, inject separator
+            if (blockStarted) {
+                result.push("---");
+            }
+            blockStarted = true;
+        }
+
+        result.push(line);
+    }
+
+    return result.join("\n");
+}
+
 function inferQuestionType(
     explicitType: string | undefined,
     options: any[] | undefined,
     answer: string | string[] | undefined
 ): QuestionType {
+    // Always respect an explicit TYPE declaration first
     if (explicitType) {
         const upper = explicitType.trim().toUpperCase();
         if (upper === "MSQ") return "MSQ";
         if (upper === "TITA") return "TITA";
         if (upper === "MCQ") return "MCQ";
+        if (upper === "QUESTIONSET") return "MCQ"; // sub-questions handled separately
     }
 
+    // Infer from answer structure
     if (Array.isArray(answer) && answer.length > 1) {
         return "MSQ";
     }

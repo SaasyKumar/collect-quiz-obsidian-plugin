@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { App } from "obsidian";
 import {
     QuizQuestion,
     UserResponse,
@@ -18,6 +19,7 @@ interface QuizAppProps {
     quizTitle: string;
     questions: QuizQuestion[];
     settings: QuizCollectorSettings;
+    app: App;
     onCloseModal: () => void;
     onExportAsNote: (content: string) => void;
 }
@@ -28,6 +30,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
     quizTitle,
     questions: rawQuestions,
     settings,
+    app,
     onCloseModal,
     onExportAsNote,
 }) => {
@@ -467,8 +470,11 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                         userResponses={userResponses}
                         quizTitle={quizTitle}
                         thresholdPercentage={settings.thresholdPercentage}
+                        defaultCorrectMark={settings.defaultCorrectMark}
+                        defaultNegativeMark={settings.defaultNegativeMark}
                         initialAttempt={initialAttempt}
                         isRecursiveIteration={isRecursiveIteration}
+                        app={app}
                         onRetakeQuiz={handleRetakeQuiz}
                         onStartRecursiveRetest={handleStartRecursiveTest}
                         onClose={onCloseModal}

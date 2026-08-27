@@ -592,6 +592,57 @@
     user-select: text;
 }
 
+/* ---- MSQ Checkbox (during quiz taking) ---- */
+.qc-option-msq-row {
+    /* No bulb-btn space needed for MSQ */
+}
+
+.qc-option-checkbox {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    color: var(--text-on-accent);
+}
+
+.qc-checkbox-checked {
+    background: var(--interactive-accent);
+    border-color: var(--interactive-accent);
+}
+
+/* ---- MSQ Checkbox in Review Mode ---- */
+.qc-ropt-checkbox {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border-radius: 3px;
+    border: 2px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+}
+
+.qc-ropt-cb-checked {
+    border-color: var(--interactive-accent);
+    background: rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.15);
+    color: var(--interactive-accent);
+}
+
+.qc-ropt-cb-correct {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+
 /* TITA styling */
 .qc-tita-container {
     display: flex;
@@ -1236,24 +1287,175 @@
 }
 
 .qc-explanation-box {
-    background: rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.08);
-    border: 1px solid rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.2);
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.06);
+    border: 1px solid rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.18);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.qc-explanation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    gap: 8px;
 }
 
 .qc-explanation-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 12px;
     font-weight: 700;
     color: var(--text-accent);
-    margin-bottom: 4px;
+}
+
+.qc-has-img-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.qc-explanation-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-accent);
+    background: rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.1);
+    border: 1px solid rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+}
+.qc-explanation-toggle-btn:hover {
+    background: rgba(var(--interactive-accent-rgb, 100, 100, 255), 0.18);
 }
 
 .qc-explanation-text {
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.6;
     color: var(--text-normal);
+    padding: 0 14px 12px 14px;
+    white-space: pre-wrap;
 }
+
+.qc-explanation-clamped {
+    max-height: 72px;
+    overflow: hidden;
+}
+
+.qc-explanation-fade-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px 10px;
+    cursor: pointer;
+}
+
+.qc-fade-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--text-accent);
+    font-weight: 600;
+    opacity: 0.8;
+    transition: opacity 0.15s;
+}
+.qc-fade-btn:hover { opacity: 1; }
+
+/* ---- Explanation Images ---- */
+.qc-explanation-image-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 8px 0;
+}
+
+.qc-explanation-img {
+    max-width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+    border-radius: 8px;
+    border: 1px solid var(--background-modifier-border);
+    cursor: zoom-in;
+    transition: opacity 0.15s ease;
+}
+.qc-explanation-img:hover { opacity: 0.9; }
+
+.qc-explanation-img-caption {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.qc-explanation-img-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--background-secondary);
+    border: 1px dashed var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin: 4px 0;
+}
+
+/* ---- Image Lightbox ---- */
+.qc-image-lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: qc-fade-in 0.15s ease;
+}
+
+.qc-lightbox-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.qc-lightbox-img {
+    max-width: 85vw;
+    max-height: 78vh;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+}
+
+.qc-lightbox-close-btn {
+    margin-top: 4px;
+}
+
+@keyframes qc-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 
 .qc-review-tita-block {
     display: flex;
@@ -1719,5 +1921,230 @@
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
+
+/* ==========================================================================
+   Hidden Solutions & Countdown Reveal Styles
+   ========================================================================== */
+
+.qc-retest-banner-locked {
+    border-color: rgba(245, 158, 11, 0.4) !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(239, 68, 68, 0.08) 100%) !important;
+}
+
+.qc-countdown-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.qc-countdown-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.qc-countdown-chip strong {
+    font-weight: 700;
+    color: #d97706;
+}
+
+.qc-countdown-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.qc-countdown-toggle-btn:hover {
+    color: var(--text-normal);
+    background: var(--background-modifier-hover);
+}
+
+.qc-retest-actions-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 220px;
+}
+
+.qc-reveal-now-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
+    border: 1px solid var(--background-modifier-border) !important;
+}
+
+.qc-locked-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Locked Solutions Placeholder Panel */
+.qc-locked-solutions-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: var(--background-secondary-alt);
+    border: 1px dashed rgba(245, 158, 11, 0.4);
+    border-radius: 14px;
+    padding: 48px 24px;
+    margin-top: 10px;
+    gap: 14px;
+}
+
+.qc-locked-icon-wrap {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+}
+
+.qc-locked-icon {
+    color: #f59e0b;
+}
+
+.qc-locked-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.qc-locked-hint {
+    margin: 0;
+    max-width: 520px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.qc-locked-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+/* ==========================================================================
+   Dynamic Marking Scheme Selector & Recalculated Score Styles
+   ========================================================================== */
+
+.qc-marking-scheme-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.qc-scheme-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.qc-scheme-select {
+    background: var(--background-primary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.qc-scheme-select:hover,
+.qc-scheme-select:focus {
+    border-color: var(--interactive-accent);
+}
+
+.qc-custom-marking-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.qc-cinput-group {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.qc-cinput {
+    width: 52px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.qc-negative-incurred-pill {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.qc-score-sep {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.qc-metric-val-denom {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+
 
 

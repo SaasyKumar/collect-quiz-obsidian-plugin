@@ -24,6 +24,7 @@ C. Option C
 D. Option D
 ANSWER: A
 EXPLANATION: Explanation for the correct answer.
+---
 `,
     },
     {
@@ -40,6 +41,7 @@ C. Option C
 D. Option D
 ANSWER: A,C
 EXPLANATION: Explanation for the correct answers.
+---
 `,
     },
     {
@@ -66,6 +68,7 @@ C. Option C
 D. Option D
 ANSWER: B
 EXPLANATION: Explanation for question 2.
+---
 `,
     },
     {
@@ -78,6 +81,7 @@ EXPLANATION: Explanation for question 2.
 QUESTION: Enter numerical or direct answer question here
 ANSWER: 42
 EXPLANATION: Explanation and solution steps.
+---
 `,
     },
 ];

@@ -39,6 +39,7 @@ export class QuizModal extends Modal {
                     quizTitle={this.quizTitle}
                     questions={this.questions}
                     settings={this.settings}
+                    app={this.app}
                     onCloseModal={() => this.close()}
                     onExportAsNote={(markdownSummary: string) =>
                         this.handleExportNote(markdownSummary)

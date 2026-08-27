@@ -125,6 +125,41 @@ export class QuizCollectorSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+
+        containerEl.createEl("h3", { text: "Marking Scheme" });
+
+        new Setting(containerEl)
+            .setName("Default marks per correct answer")
+            .setDesc("Points awarded for each correctly answered question (e.g., 1, 2, 3, 4).")
+            .addText((text) =>
+                text
+                    .setPlaceholder("1")
+                    .setValue(String(this.plugin.settings.defaultCorrectMark ?? 1))
+                    .onChange(async (value) => {
+                        const num = parseFloat(value);
+                        if (!isNaN(num) && num > 0) {
+                            this.plugin.settings.defaultCorrectMark = num;
+                            await this.plugin.saveSettings();
+                        }
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Default negative marks per wrong answer")
+            .setDesc("Points deducted for each incorrectly answered question (e.g., 0 for none, 0.25, 0.33, 1).")
+            .addText((text) =>
+                text
+                    .setPlaceholder("0")
+                    .setValue(String(this.plugin.settings.defaultNegativeMark ?? 0))
+                    .onChange(async (value) => {
+                        const num = parseFloat(value);
+                        if (!isNaN(num) && num >= 0) {
+                            this.plugin.settings.defaultNegativeMark = num;
+                            await this.plugin.saveSettings();
+                        }
+                    })
+            );
     }
 }
+
 

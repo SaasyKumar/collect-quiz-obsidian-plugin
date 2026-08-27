@@ -57,6 +57,8 @@ export interface QuizCollectorSettings {
     thresholdPercentage: number;
     randomizeQuestions: boolean;
     randomizeOptions: boolean;
+    defaultCorrectMark: number;
+    defaultNegativeMark: number;
 }
 
 export const DEFAULT_SETTINGS: QuizCollectorSettings = {
@@ -68,5 +70,8 @@ export const DEFAULT_SETTINGS: QuizCollectorSettings = {
     thresholdPercentage: 50,
     randomizeQuestions: true,
     randomizeOptions: true,
+    defaultCorrectMark: 1,
+    defaultNegativeMark: 0,
 };
+
 
