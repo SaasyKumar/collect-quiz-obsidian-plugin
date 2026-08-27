@@ -14,6 +14,12 @@
   - **MSQ** (Multiple Select Question)
   - **RC** (Reading Comprehension / Question Set with passage)
   - **TITA** (Type-In-The-Answer)
+- 🔄 **Recursive Retest & Side-by-Side Analysis**:
+  - If your quiz score is below threshold (< 50% or configurable in Settings), a **Recursive Retest** option lets you immediately retake only the questions you answered incorrectly.
+  - The analysis page displays a **Side-by-Side Comparison Dashboard** showing Attempt 1 vs. Recursive Attempt stats, accuracy gains, and question-by-question recovery tags.
+- 🎲 **Question & Option Randomizer**:
+  - Automatically shuffles the order of questions and answer options (A, B, C, D) on each new test to enhance recall and prevent muscle memory (toggleable in Settings).
+  - Intelligently maintains reading comprehension passage context blocks.
 - ⏱️ **Pausable Timer**: Configurable countdown timer per question (changeable in Settings) with low-time warning animations, and instant pause/resume (`Space` key or top timer button).
 - 💡 **Hover Bulb Guess Mechanic**:
   - Hovering over any option button reveals a bulb (💡) icon on the left edge.
@@ -36,6 +42,7 @@
   - **Guessed Wrong** (unlucky guesses)
   - **Unattempted**
   - Overall Score & Accuracy %
+  - Clean top **Close** button in header during analysis phase.
   - Detailed Question-by-Question review with correct answers, explanations, and your choices.
   - Export result note directly into your Obsidian vault.
 - ⌨️ **Keyboard Shortcuts**:

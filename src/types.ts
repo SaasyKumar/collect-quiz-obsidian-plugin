@@ -41,12 +41,22 @@ export interface QuizResultStats {
     totalAllowedSeconds: number;
 }
 
+export interface QuizAttemptRecord {
+    stats: QuizResultStats;
+    questions: QuizQuestion[];
+    userResponses: Record<string, UserResponse>;
+    timestamp?: number;
+}
+
 export interface QuizCollectorSettings {
     timePerQuestionSeconds: number;
     enableTimer: boolean;
     warningTimeSeconds: number;
     autoAdvanceOnSelect: boolean;
     confirmBeforeSubmit: boolean;
+    thresholdPercentage: number;
+    randomizeQuestions: boolean;
+    randomizeOptions: boolean;
 }
 
 export const DEFAULT_SETTINGS: QuizCollectorSettings = {
@@ -55,4 +65,8 @@ export const DEFAULT_SETTINGS: QuizCollectorSettings = {
     warningTimeSeconds: 15,
     autoAdvanceOnSelect: false,
     confirmBeforeSubmit: true,
+    thresholdPercentage: 50,
+    randomizeQuestions: true,
+    randomizeOptions: true,
 };
+

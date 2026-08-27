@@ -83,5 +83,48 @@ export class QuizCollectorSettingTab extends PluginSettingTab {
                         await this.plugin.saveSettings();
                     })
             );
+
+        containerEl.createEl("h3", { text: "Retest & Randomization" });
+
+        new Setting(containerEl)
+            .setName("Recursive retest threshold (%)")
+            .setDesc("If your score percentage is below this threshold, offer an option to recursively retake only the wrong questions.")
+            .addText((text) =>
+                text
+                    .setPlaceholder("50")
+                    .setValue(String(this.plugin.settings.thresholdPercentage))
+                    .onChange(async (value) => {
+                        const num = parseInt(value, 10);
+                        if (!isNaN(num) && num >= 0 && num <= 100) {
+                            this.plugin.settings.thresholdPercentage = num;
+                            await this.plugin.saveSettings();
+                        }
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Randomize question order")
+            .setDesc("Shuffle the order of questions when starting or restarting a quiz.")
+            .addToggle((toggle) =>
+                toggle
+                    .setValue(this.plugin.settings.randomizeQuestions)
+                    .onChange(async (value) => {
+                        this.plugin.settings.randomizeQuestions = value;
+                        await this.plugin.saveSettings();
+                    })
+            );
+
+        new Setting(containerEl)
+            .setName("Randomize option choices")
+            .setDesc("Shuffle option choices (A, B, C, D) for MCQ and MSQ questions on each test.")
+            .addToggle((toggle) =>
+                toggle
+                    .setValue(this.plugin.settings.randomizeOptions)
+                    .onChange(async (value) => {
+                        this.plugin.settings.randomizeOptions = value;
+                        await this.plugin.saveSettings();
+                    })
+            );
     }
 }
+

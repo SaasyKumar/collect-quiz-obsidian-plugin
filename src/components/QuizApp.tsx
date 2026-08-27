@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     QuizQuestion,
     UserResponse,
     QuizCollectorSettings,
     QuizResultStats,
+    QuizAttemptRecord,
 } from "../types";
 import { QuizHeader } from "./QuizHeader";
 import { QuestionCard } from "./QuestionCard";
 import { QuestionPalette } from "./QuestionPalette";
 import { ResultView } from "./ResultView";
-import { calculateQuizResults } from "../utils/scorer";
+import { calculateQuizResults, checkIsCorrect } from "../utils/scorer";
+import { randomizeQuiz } from "../utils/randomizer";
 import { Play, AlertCircle, CheckCircle2, Bookmark, Lightbulb } from "lucide-react";
 
 interface QuizAppProps {
@@ -24,11 +26,20 @@ type QuizPhase = "taking" | "results";
 
 export const QuizApp: React.FC<QuizAppProps> = ({
     quizTitle,
-    questions,
+    questions: rawQuestions,
     settings,
     onCloseModal,
     onExportAsNote,
 }) => {
+    // Active questions for the current run (randomized on start)
+    const [activeQuestions, setActiveQuestions] = useState<QuizQuestion[]>(() =>
+        randomizeQuiz(rawQuestions, settings.randomizeQuestions, settings.randomizeOptions)
+    );
+
+    // Initial attempt record if user enters recursive retest mode
+    const [initialAttempt, setInitialAttempt] = useState<QuizAttemptRecord | null>(null);
+    const [isRecursiveIteration, setIsRecursiveIteration] = useState<boolean>(false);
+
     // Current question index
     const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -44,8 +55,8 @@ export const QuizApp: React.FC<QuizAppProps> = ({
     // Final calculated statistics
     const [finalStats, setFinalStats] = useState<QuizResultStats | null>(null);
 
-    // Timer calculation: time per question * total questions
-    const totalAllowedSeconds = Math.max(10, settings.timePerQuestionSeconds * questions.length);
+    // Timer calculation: time per question * active questions count
+    const totalAllowedSeconds = Math.max(10, settings.timePerQuestionSeconds * activeQuestions.length);
     const [timeLeft, setTimeLeft] = useState<number>(totalAllowedSeconds);
     const [isTimerRunning, setIsTimerRunning] = useState<boolean>(settings.enableTimer);
     const [timeSpent, setTimeSpent] = useState<number>(0);
@@ -89,7 +100,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
     };
 
     // Current active question
-    const currentQuestion = questions[currentIndex] || questions[0];
+    const currentQuestion = activeQuestions[currentIndex] || activeQuestions[0];
     const currentResponse = currentQuestion ? userResponses[currentQuestion.id] : undefined;
 
     // Option selection handler
@@ -116,13 +127,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
             }
         } else {
             // Single choice (MCQ)
-            // If already selected and clicked same key, toggle off or keep?
-            if (prevResp.selectedKeys.length === 1 && prevResp.selectedKeys[0] === key) {
-                // If user clicks the exact same selected key without guess change, we can allow keeping or toggling
-                newSelectedKeys = [key];
-            } else {
-                newSelectedKeys = [key];
-            }
+            newSelectedKeys = [key];
         }
 
         const isAnswered = newSelectedKeys.length > 0;
@@ -141,10 +146,10 @@ export const QuizApp: React.FC<QuizAppProps> = ({
         if (
             settings.autoAdvanceOnSelect &&
             currentQuestion.type === "MCQ" &&
-            currentIndex < questions.length - 1
+            currentIndex < activeQuestions.length - 1
         ) {
             setTimeout(() => {
-                setCurrentIndex((idx) => Math.min(questions.length - 1, idx + 1));
+                setCurrentIndex((idx) => Math.min(activeQuestions.length - 1, idx + 1));
             }, 300);
         }
     };
@@ -221,11 +226,11 @@ export const QuizApp: React.FC<QuizAppProps> = ({
     };
 
     const handleNext = () => {
-        setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
+        setCurrentIndex((prev) => Math.min(activeQuestions.length - 1, prev + 1));
     };
 
     const handleJumpToQuestion = (index: number) => {
-        if (index >= 0 && index < questions.length) {
+        if (index >= 0 && index < activeQuestions.length) {
             setCurrentIndex(index);
         }
     };
@@ -243,7 +248,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
         setShowSubmitConfirm(false);
         setIsTimerRunning(false);
         const stats = calculateQuizResults(
-            questions,
+            activeQuestions,
             userResponses,
             timeSpent,
             totalAllowedSeconds
@@ -252,21 +257,69 @@ export const QuizApp: React.FC<QuizAppProps> = ({
         setPhase("results");
     };
 
-    // Retake quiz
+    // Full retake (restart fresh full quiz with newly randomized order & choices)
     const handleRetakeQuiz = () => {
+        const freshQuestions = randomizeQuiz(
+            rawQuestions,
+            settings.randomizeQuestions,
+            settings.randomizeOptions
+        );
+        setActiveQuestions(freshQuestions);
+        setInitialAttempt(null);
+        setIsRecursiveIteration(false);
         setUserResponses({});
         setCurrentIndex(0);
-        setTimeLeft(totalAllowedSeconds);
+        const allowed = Math.max(10, settings.timePerQuestionSeconds * freshQuestions.length);
+        setTimeLeft(allowed);
         setTimeSpent(0);
         setIsTimerRunning(settings.enableTimer);
         setFinalStats(null);
         setPhase("taking");
     };
 
+    // Recursive Retest: Only wrong/unanswered questions from attempt 1
+    const handleStartRecursiveTest = () => {
+        if (!finalStats) return;
+
+        // Filter for questions that were answered incorrectly or left unattempted
+        const wrongQuestions = activeQuestions.filter((q) => {
+            const resp = userResponses[q.id];
+            return !checkIsCorrect(q, resp);
+        });
+
+        if (wrongQuestions.length === 0) return;
+
+        // Save Attempt 1 snapshot
+        const firstAttemptSnapshot: QuizAttemptRecord = {
+            stats: finalStats,
+            questions: activeQuestions,
+            userResponses: { ...userResponses },
+            timestamp: Date.now(),
+        };
+        setInitialAttempt(firstAttemptSnapshot);
+
+        // Randomize the wrong questions subset for Attempt 2
+        const randomizedWrong = randomizeQuiz(
+            wrongQuestions,
+            settings.randomizeQuestions,
+            settings.randomizeOptions
+        );
+
+        setActiveQuestions(randomizedWrong);
+        setUserResponses({});
+        setCurrentIndex(0);
+        const allowedTime = Math.max(10, settings.timePerQuestionSeconds * randomizedWrong.length);
+        setTimeLeft(allowedTime);
+        setTimeSpent(0);
+        setIsTimerRunning(settings.enableTimer);
+        setFinalStats(null);
+        setIsRecursiveIteration(true);
+        setPhase("taking");
+    };
+
     // Keyboard Shortcuts
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Ignore if active element is an input
             if (
                 e.target instanceof HTMLInputElement ||
                 e.target instanceof HTMLTextAreaElement ||
@@ -278,7 +331,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
             if (phase === "taking") {
                 if (e.key === "ArrowRight") {
                     e.preventDefault();
-                    if (currentIndex < questions.length - 1) handleNext();
+                    if (currentIndex < activeQuestions.length - 1) handleNext();
                 } else if (e.key === "ArrowLeft") {
                     e.preventDefault();
                     if (currentIndex > 0) handlePrevious();
@@ -289,7 +342,6 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                     e.preventDefault();
                     handleToggleTimer();
                 } else if (["1", "2", "3", "4", "5", "6"].includes(e.key)) {
-                    // Option number selection
                     const optIdx = parseInt(e.key, 10) - 1;
                     if (currentQuestion?.options && currentQuestion.options[optIdx]) {
                         e.preventDefault();
@@ -308,15 +360,15 @@ export const QuizApp: React.FC<QuizAppProps> = ({
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [phase, currentIndex, questions, currentQuestion, showSubmitConfirm]);
+    }, [phase, currentIndex, activeQuestions, currentQuestion, showSubmitConfirm]);
 
     // Count statistics for submit confirmation modal
     const answeredCount = Object.values(userResponses).filter((r) => r.isAnswered).length;
-    const unansweredCount = questions.length - answeredCount;
+    const unansweredCount = activeQuestions.length - answeredCount;
     const reviewCount = Object.values(userResponses).filter((r) => r.isMarkedForReview).length;
     const guessedCount = Object.values(userResponses).filter((r) => r.isGuessed).length;
 
-    if (!questions || questions.length === 0) {
+    if (!activeQuestions || activeQuestions.length === 0) {
         return (
             <div className="qc-empty-state">
                 <AlertCircle size={40} className="qc-empty-icon" />
@@ -340,7 +392,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
             <QuizHeader
                 title={quizTitle}
                 currentIndex={currentIndex}
-                totalQuestions={questions.length}
+                totalQuestions={activeQuestions.length}
                 timeLeft={timeLeft}
                 totalTime={totalAllowedSeconds}
                 isTimerRunning={isTimerRunning}
@@ -348,11 +400,14 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                 warningTimeSeconds={settings.warningTimeSeconds}
                 onToggleTimer={handleToggleTimer}
                 onSubmitQuiz={handleSubmitClick}
+                onClose={onCloseModal}
                 userResponses={userResponses}
-                questions={questions}
+                questions={activeQuestions}
+                phase={phase}
+                isRecursive={isRecursiveIteration}
             />
 
-            {/* Main Area */}
+            {/* Main Taking Area */}
             {phase === "taking" && (
                 <div className="qc-main-layout">
                     {/* Paused Overlay */}
@@ -376,7 +431,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                     <main className="qc-question-column">
                         <QuestionCard
                             question={currentQuestion}
-                            totalQuestions={questions.length}
+                            totalQuestions={activeQuestions.length}
                             currentResponse={currentResponse}
                             onSelectOption={handleSelectOption}
                             onTextAnswerChange={handleTextAnswerChange}
@@ -385,8 +440,8 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                             onPrevious={handlePrevious}
                             onNext={handleNext}
                             canPrevious={currentIndex > 0}
-                            canNext={currentIndex < questions.length - 1}
-                            isLastQuestion={currentIndex === questions.length - 1}
+                            canNext={currentIndex < activeQuestions.length - 1}
+                            isLastQuestion={currentIndex === activeQuestions.length - 1}
                             onSubmitQuiz={handleSubmitClick}
                         />
                     </main>
@@ -394,7 +449,7 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                     {/* Right Sidebar: Status & Question Palette */}
                     <aside className="qc-sidebar-column">
                         <QuestionPalette
-                            questions={questions}
+                            questions={activeQuestions}
                             currentIndex={currentIndex}
                             userResponses={userResponses}
                             onSelectQuestion={handleJumpToQuestion}
@@ -408,10 +463,14 @@ export const QuizApp: React.FC<QuizAppProps> = ({
                 <div className="qc-results-layout">
                     <ResultView
                         stats={finalStats}
-                        questions={questions}
+                        questions={activeQuestions}
                         userResponses={userResponses}
                         quizTitle={quizTitle}
+                        thresholdPercentage={settings.thresholdPercentage}
+                        initialAttempt={initialAttempt}
+                        isRecursiveIteration={isRecursiveIteration}
                         onRetakeQuiz={handleRetakeQuiz}
+                        onStartRecursiveRetest={handleStartRecursiveTest}
                         onClose={onCloseModal}
                         onExportAsNote={onExportAsNote}
                     />

@@ -8,14 +8,17 @@ import {
     RotateCcw,
     FileText,
     X,
-    Filter,
     Clock,
     ChevronDown,
     ChevronUp,
     BookOpen,
     Check,
+    TrendingUp,
+    Sparkles,
+    AlertTriangle,
+    Layers,
 } from "lucide-react";
-import { QuizQuestion, UserResponse, QuizResultStats } from "../types";
+import { QuizQuestion, UserResponse, QuizResultStats, QuizAttemptRecord } from "../types";
 import { checkIsCorrect, getCorrectAnswerKeys } from "../utils/scorer";
 
 interface ResultViewProps {
@@ -23,7 +26,11 @@ interface ResultViewProps {
     questions: QuizQuestion[];
     userResponses: Record<string, UserResponse>;
     quizTitle: string;
+    thresholdPercentage?: number;
+    initialAttempt?: QuizAttemptRecord | null;
+    isRecursiveIteration?: boolean;
     onRetakeQuiz: () => void;
+    onStartRecursiveRetest?: () => void;
     onClose: () => void;
     onExportAsNote: (markdownSummary: string) => void;
 }
@@ -35,7 +42,11 @@ export const ResultView: React.FC<ResultViewProps> = ({
     questions,
     userResponses,
     quizTitle,
+    thresholdPercentage = 50,
+    initialAttempt = null,
+    isRecursiveIteration = false,
     onRetakeQuiz,
+    onStartRecursiveRetest,
     onClose,
     onExportAsNote,
 }) => {
@@ -55,21 +66,48 @@ export const ResultView: React.FC<ResultViewProps> = ({
         return `${mins}m ${secs}s`;
     };
 
+    // Calculate whether retest recommendation is active
+    const isBelowThreshold = stats.accuracyPercentage < thresholdPercentage;
+    const hasMissedQuestions = stats.wrong + stats.unattempted > 0;
+    const canDoRecursiveRetest =
+        !isRecursiveIteration && !initialAttempt && isBelowThreshold && hasMissedQuestions && !!onStartRecursiveRetest;
+
+    // Calculate comparative metrics if initialAttempt is present
+    const isComparative = !!initialAttempt;
+    const accuracyDelta = isComparative ? stats.accuracyPercentage - initialAttempt.stats.accuracyPercentage : 0;
+    const recoveredCount = isComparative ? stats.right : 0;
+
     const generateMarkdownReport = (): string => {
         const dateStr = new Date().toLocaleString();
         let md = `# Quiz Results: ${quizTitle || "Untitled Quiz"}\n\n`;
         md += `**Date:** ${dateStr}  \n`;
-        md += `**Score:** ${stats.score} / ${stats.total} (${stats.accuracyPercentage}%)  \n`;
-        md += `**Time Spent:** ${formatSeconds(stats.timeSpentSeconds)}\n\n`;
-        md += `## Performance Summary\n\n`;
-        md += `| Metric | Count |\n`;
-        md += `| --- | --- |\n`;
-        md += `| **Attempted** | ${stats.attempted} |\n`;
-        md += `| **Right** | ${stats.right} |\n`;
-        md += `| **Guessed Right** | ${stats.guessedRight} |\n`;
-        md += `| **Wrong** | ${stats.wrong} |\n`;
-        md += `| **Guessed Wrong** | ${stats.guessedWrong} |\n`;
-        md += `| **Unattempted** | ${stats.unattempted} |\n\n`;
+
+        if (isComparative && initialAttempt) {
+            md += `## 🔄 Iterative Quiz Comparison (Initial vs. Recursive Retest)\n\n`;
+            md += `| Metric | Initial Attempt | Recursive Retest | Delta |\n`;
+            md += `| --- | --- | --- | --- |\n`;
+            md += `| **Score** | ${initialAttempt.stats.score} / ${initialAttempt.stats.total} | ${stats.score} / ${stats.total} | ${accuracyDelta >= 0 ? "+" : ""}${accuracyDelta}% |\n`;
+            md += `| **Accuracy** | ${initialAttempt.stats.accuracyPercentage}% | ${stats.accuracyPercentage}% | ${accuracyDelta >= 0 ? "+" : ""}${accuracyDelta}% |\n`;
+            md += `| **Attempted** | ${initialAttempt.stats.attempted} | ${stats.attempted} | - |\n`;
+            md += `| **Right** | ${initialAttempt.stats.right} | ${stats.right} | +${recoveredCount} recovered |\n`;
+            md += `| **Wrong** | ${initialAttempt.stats.wrong} | ${stats.wrong} | - |\n`;
+            md += `| **Guessed Right** | ${initialAttempt.stats.guessedRight} | ${stats.guessedRight} | - |\n`;
+            md += `| **Guessed Wrong** | ${initialAttempt.stats.guessedWrong} | ${stats.guessedWrong} | - |\n`;
+            md += `| **Time Spent** | ${formatSeconds(initialAttempt.stats.timeSpentSeconds)} | ${formatSeconds(stats.timeSpentSeconds)} | - |\n\n`;
+        } else {
+            md += `**Score:** ${stats.score} / ${stats.total} (${stats.accuracyPercentage}%)  \n`;
+            md += `**Time Spent:** ${formatSeconds(stats.timeSpentSeconds)}\n\n`;
+            md += `## Performance Summary\n\n`;
+            md += `| Metric | Count |\n`;
+            md += `| --- | --- |\n`;
+            md += `| **Attempted** | ${stats.attempted} |\n`;
+            md += `| **Right** | ${stats.right} |\n`;
+            md += `| **Guessed Right** | ${stats.guessedRight} |\n`;
+            md += `| **Wrong** | ${stats.wrong} |\n`;
+            md += `| **Guessed Wrong** | ${stats.guessedWrong} |\n`;
+            md += `| **Unattempted** | ${stats.unattempted} |\n\n`;
+        }
+
         md += `## Detailed Question Review\n\n`;
 
         questions.forEach((q, idx) => {
@@ -82,6 +120,13 @@ export const ResultView: React.FC<ResultViewProps> = ({
             md += `### ${idx + 1}. ${q.question}\n\n`;
             if (q.passage) {
                 md += `> **Passage Context:** ${q.passage}\n\n`;
+            }
+
+            if (isComparative && initialAttempt) {
+                const initResp = initialAttempt.userResponses[q.id];
+                const initCorrect = checkIsCorrect(q, initResp);
+                md += `> **Attempt 1:** ${initCorrect ? "✅ Correct" : "❌ Incorrect"} (${initResp?.selectedKeys?.join(", ") || initResp?.textAnswer || "None"})\n`;
+                md += `> **Retest Attempt:** ${isCorrect ? "✅ Correct" : "❌ Incorrect"} (${resp?.selectedKeys?.join(", ") || resp?.textAnswer || "None"})\n\n`;
             }
 
             if (q.options && q.options.length > 0) {
@@ -160,10 +205,16 @@ export const ResultView: React.FC<ResultViewProps> = ({
             <div className="qc-result-hero">
                 <div className="qc-hero-left">
                     <div className="qc-trophy-circle">
-                        <Trophy size={36} className="qc-trophy-icon" />
+                        {isComparative ? (
+                            <TrendingUp size={36} className="qc-trophy-icon" />
+                        ) : (
+                            <Trophy size={36} className="qc-trophy-icon" />
+                        )}
                     </div>
                     <div className="qc-hero-meta">
-                        <h2 className="qc-result-title">Quiz Completed!</h2>
+                        <h2 className="qc-result-title">
+                            {isComparative ? "Recursive Retest Completed!" : "Quiz Completed!"}
+                        </h2>
                         <p className="qc-result-subtitle">{quizTitle || "Knowledge Check"}</p>
                     </div>
                 </div>
@@ -182,7 +233,123 @@ export const ResultView: React.FC<ResultViewProps> = ({
                 </div>
             </div>
 
-            {/* Core Metrics Grid required by user */}
+            {/* Recursive Retest Recommendation Banner (< 50% or setting threshold) */}
+            {canDoRecursiveRetest && (
+                <div className="qc-retest-banner">
+                    <div className="qc-retest-banner-content">
+                        <div className="qc-retest-badge">
+                            <AlertTriangle size={13} />
+                            <span>Score Below {thresholdPercentage}% Threshold</span>
+                        </div>
+                        <h3 className="qc-retest-heading">Boost Your Mastery with Recursive Retest</h3>
+                        <p className="qc-retest-desc">
+                            You missed <strong>{stats.wrong + stats.unattempted}</strong> question(s). Take a targeted
+                            retest containing only the questions you got wrong to lock in what you learned.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        className="qc-btn qc-btn-primary qc-retest-action-btn"
+                        onClick={onStartRecursiveRetest}
+                    >
+                        <RotateCcw size={16} />
+                        <span>Retake Wrong Questions ({stats.wrong + stats.unattempted})</span>
+                    </button>
+                </div>
+            )}
+
+            {/* Side-by-Side Comparison Grid when Recursive Retest is finished */}
+            {isComparative && initialAttempt && (
+                <div className="qc-side-by-side-section">
+                    <div className="qc-comparison-header">
+                        <div className="qc-comp-title">
+                            <Layers size={18} className="qc-comp-icon" />
+                            <span>Iterative Test Comparison</span>
+                        </div>
+                        <div
+                            className={`qc-delta-pill ${
+                                accuracyDelta >= 0 ? "qc-delta-positive" : "qc-delta-negative"
+                            }`}
+                        >
+                            <Sparkles size={14} />
+                            <span>
+                                {accuracyDelta >= 0 ? `+${accuracyDelta}%` : `${accuracyDelta}%`} Accuracy Improvement
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="qc-comparison-grid">
+                        {/* Initial Attempt Card */}
+                        <div className="qc-attempt-card qc-attempt-card-initial">
+                            <div className="qc-acard-header">
+                                <span className="qc-acard-tag">Attempt 1 (Full Quiz)</span>
+                                <span className="qc-acard-score">
+                                    {initialAttempt.stats.score}/{initialAttempt.stats.total} (
+                                    {initialAttempt.stats.accuracyPercentage}%)
+                                </span>
+                            </div>
+                            <div className="qc-acard-body">
+                                <div className="qc-acard-row">
+                                    <span>Attempted:</span>
+                                    <strong>{initialAttempt.stats.attempted}</strong>
+                                </div>
+                                <div className="qc-acard-row qc-row-green">
+                                    <span>Right:</span>
+                                    <strong>{initialAttempt.stats.right}</strong>
+                                </div>
+                                <div className="qc-acard-row qc-row-red">
+                                    <span>Wrong:</span>
+                                    <strong>{initialAttempt.stats.wrong}</strong>
+                                </div>
+                                <div className="qc-acard-row qc-row-amber">
+                                    <span>Guessed:</span>
+                                    <strong>
+                                        {initialAttempt.stats.guessedRight + initialAttempt.stats.guessedWrong}
+                                    </strong>
+                                </div>
+                                <div className="qc-acard-row">
+                                    <span>Time:</span>
+                                    <strong>{formatSeconds(initialAttempt.stats.timeSpentSeconds)}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recursive Retest Card */}
+                        <div className="qc-attempt-card qc-attempt-card-recursive">
+                            <div className="qc-acard-header">
+                                <span className="qc-acard-tag">Attempt 2 (Recursive Retest)</span>
+                                <span className="qc-acard-score">
+                                    {stats.score}/{stats.total} ({stats.accuracyPercentage}%)
+                                </span>
+                            </div>
+                            <div className="qc-acard-body">
+                                <div className="qc-acard-row">
+                                    <span>Attempted:</span>
+                                    <strong>{stats.attempted}</strong>
+                                </div>
+                                <div className="qc-acard-row qc-row-green">
+                                    <span>Right (Recovered):</span>
+                                    <strong>{stats.right}</strong>
+                                </div>
+                                <div className="qc-acard-row qc-row-red">
+                                    <span>Still Wrong:</span>
+                                    <strong>{stats.wrong}</strong>
+                                </div>
+                                <div className="qc-acard-row qc-row-amber">
+                                    <span>Guessed:</span>
+                                    <strong>{stats.guessedRight + stats.guessedWrong}</strong>
+                                </div>
+                                <div className="qc-acard-row">
+                                    <span>Time:</span>
+                                    <strong>{formatSeconds(stats.timeSpentSeconds)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Standard Metrics Grid */}
             <div className="qc-metrics-grid">
                 {/* 1. Attempted */}
                 <div className="qc-metric-card qc-metric-attempted">
@@ -197,7 +364,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
                 {/* 2. Right */}
                 <div className="qc-metric-card qc-metric-right">
                     <div className="qc-metric-header">
-                        <span className="qc-metric-title">Right</span>
+                        <span className="qc-metric-title">{isComparative ? "Recovered Right" : "Right"}</span>
                         <CheckCircle2 size={16} className="qc-metric-icon qc-icon-green" />
                     </div>
                     <div className="qc-metric-val qc-val-green">{stats.right}</div>
@@ -217,7 +384,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
                 {/* 4. Wrong */}
                 <div className="qc-metric-card qc-metric-wrong">
                     <div className="qc-metric-header">
-                        <span className="qc-metric-title">Wrong</span>
+                        <span className="qc-metric-title">{isComparative ? "Still Wrong" : "Wrong"}</span>
                         <XCircle size={16} className="qc-metric-icon qc-icon-red" />
                     </div>
                     <div className="qc-metric-val qc-val-red">{stats.wrong}</div>
@@ -276,6 +443,17 @@ export const ResultView: React.FC<ResultViewProps> = ({
                 </div>
 
                 <div className="qc-result-btn-group">
+                    {canDoRecursiveRetest && (
+                        <button
+                            type="button"
+                            className="qc-btn qc-btn-accent"
+                            onClick={onStartRecursiveRetest}
+                            title="Retake only the questions answered incorrectly"
+                        >
+                            <RotateCcw size={15} />
+                            <span>Recursive Retest</span>
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="qc-btn qc-btn-secondary"
@@ -289,18 +467,19 @@ export const ResultView: React.FC<ResultViewProps> = ({
                         type="button"
                         className="qc-btn qc-btn-secondary"
                         onClick={onRetakeQuiz}
-                        title="Retake this quiz"
+                        title="Retake the full quiz"
                     >
                         <RotateCcw size={15} />
-                        <span>Retake</span>
+                        <span>Full Retake</span>
                     </button>
                     <button
                         type="button"
                         className="qc-btn qc-btn-primary"
                         onClick={onClose}
+                        title="Close Quiz Modal"
                     >
                         <X size={15} />
-                        <span>Done</span>
+                        <span>Close</span>
                     </button>
                 </div>
             </div>
@@ -325,6 +504,10 @@ export const ResultView: React.FC<ResultViewProps> = ({
                             ? "qc-review-card-guessed-wrong"
                             : "qc-review-card-wrong";
                     }
+
+                    // For comparative mode, see what the initial response was
+                    const initResp = isComparative && initialAttempt ? initialAttempt.userResponses[q.id] : undefined;
+                    const initCorrect = initResp ? checkIsCorrect(q, initResp) : undefined;
 
                     return (
                         <div key={q.id} className={`qc-review-card ${cardStatusClass}`}>
@@ -357,6 +540,25 @@ export const ResultView: React.FC<ResultViewProps> = ({
                                             <Lightbulb size={11} /> Guessed
                                         </span>
                                     )}
+
+                                    {/* Comparative Tag */}
+                                    {isComparative && initResp && (
+                                        <span
+                                            className={`qc-attempt-diff-pill ${
+                                                !initCorrect && isCorrect
+                                                    ? "qc-diff-improved"
+                                                    : initCorrect && isCorrect
+                                                    ? "qc-diff-maintained"
+                                                    : "qc-diff-missed"
+                                            }`}
+                                        >
+                                            {!initCorrect && isCorrect
+                                                ? "✨ Recovered in Retest"
+                                                : initCorrect && isCorrect
+                                                ? "✅ Maintained"
+                                                : "❌ Still Incorrect"}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="qc-review-header-right">
@@ -383,9 +585,7 @@ export const ResultView: React.FC<ResultViewProps> = ({
                                     {q.type !== "TITA" && q.options && q.options.length > 0 ? (
                                         <div className="qc-review-options-list">
                                             {q.options.map((opt) => {
-                                                const isUserChoice = resp?.selectedKeys?.includes(
-                                                    opt.key
-                                                );
+                                                const isUserChoice = resp?.selectedKeys?.includes(opt.key);
                                                 const isCorrectOption = correctKeys.includes(opt.key);
 
                                                 let optionClass = "qc-ropt-neutral";

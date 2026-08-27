@@ -1436,3 +1436,288 @@
     padding-left: 2px;
 }
 
+/* ==========================================================================
+   Recursive Retest & Side-by-Side Analysis Styles
+   ========================================================================== */
+
+.qc-recursive-header-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.qc-analysis-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+.qc-analysis-mode-pill {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--background-modifier-hover);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.qc-btn-accent {
+    background: #8b5cf6 !important;
+    color: #ffffff !important;
+    border-color: #7c3aed !important;
+}
+
+.qc-btn-accent:hover {
+    background: #7c3aed !important;
+}
+
+/* Retest Recommendation Banner */
+.qc-retest-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    animation: qc-pulse-border 3s ease infinite;
+}
+
+@keyframes qc-pulse-border {
+    0%, 100% {
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+    50% {
+        border-color: rgba(239, 68, 68, 0.6);
+    }
+}
+
+.qc-retest-banner-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.qc-retest-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.qc-retest-heading {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.qc-retest-desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.qc-retest-action-btn {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ef4444 !important;
+    border-color: #dc2626 !important;
+    color: #ffffff !important;
+    padding: 10px 18px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.qc-retest-action-btn:hover {
+    background: #dc2626 !important;
+    transform: translateY(-1px);
+}
+
+/* Side-by-Side Comparison Section */
+.qc-side-by-side-section {
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.qc-comparison-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.qc-comp-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.qc-comp-icon {
+    color: var(--text-accent);
+}
+
+.qc-delta-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.qc-delta-positive {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.qc-delta-negative {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.qc-comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.qc-attempt-card {
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.qc-attempt-card-initial {
+    border-left: 4px solid var(--text-muted);
+}
+
+.qc-attempt-card-recursive {
+    border-left: 4px solid #10b981;
+}
+
+.qc-acard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.qc-acard-tag {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.qc-attempt-card-recursive .qc-acard-tag {
+    color: #10b981;
+}
+
+.qc-acard-score {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-normal);
+}
+
+.qc-acard-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.qc-acard-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.qc-acard-row strong {
+    color: var(--text-normal);
+}
+
+.qc-row-green strong {
+    color: #10b981;
+}
+
+.qc-row-red strong {
+    color: #ef4444;
+}
+
+.qc-row-amber strong {
+    color: #f59e0b;
+}
+
+/* Comparative Diff Pill on Question Cards */
+.qc-attempt-diff-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+}
+
+.qc-diff-improved {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.qc-diff-maintained {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.qc-diff-missed {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+
