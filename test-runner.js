@@ -84,3 +84,19 @@ if (
     console.error("❌ Metric assertion failed!");
     process.exit(1);
 }
+
+// Test Quiz Templates
+console.log("\n=== Testing Quiz Templates Parsing ===");
+import { QUIZ_TEMPLATES } from "./src/components/QuizTemplateSuggestModal.ts";
+
+for (const tmpl of QUIZ_TEMPLATES) {
+    const qs = parseQuizContent(tmpl.template);
+    if (qs.length === 0) {
+        console.error(`❌ Failed to parse template: ${tmpl.label}`);
+        process.exit(1);
+    }
+    console.log(`✅ Template [${tmpl.type}]: Parsed ${qs.length} question(s) successfully.`);
+}
+
+console.log("\n🎉 ALL TESTS (INCLUDING TEMPLATES) PASSED!");
+

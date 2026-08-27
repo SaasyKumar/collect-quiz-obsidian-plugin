@@ -6,7 +6,14 @@
 
 ## ✨ Features
 
-- 🎯 **Slash Command & Quick Actions**: Run `/create quiz` or open the Command Palette (`Quiz Collector: Create quiz`) on any markdown note to instantly launch a quiz.
+- 🎯 **Slash Commands & Quick Actions**:
+  - Run `/create quiz` to instantly launch an interactive quiz from your active note.
+  - Run `/quiz template` to open a quick chooser for inserting quiz templates: **MCQ**, **MSQ**, **RC (Reading Comprehension)**, and **TITA**.
+- 📋 **Quiz Templates**: Choose from standard format templates:
+  - **MCQ** (Multiple Choice Question)
+  - **MSQ** (Multiple Select Question)
+  - **RC** (Reading Comprehension / Question Set with passage)
+  - **TITA** (Type-In-The-Answer)
 - ⏱️ **Pausable Timer**: Configurable countdown timer per question (changeable in Settings) with low-time warning animations, and instant pause/resume (`Space` key or top timer button).
 - 💡 **Hover Bulb Guess Mechanic**:
   - Hovering over any option button reveals a bulb (💡) icon on the left edge.

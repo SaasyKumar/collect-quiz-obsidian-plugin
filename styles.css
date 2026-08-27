@@ -1372,3 +1372,67 @@
     font-size: 13px;
     max-width: 480px;
 }
+
+/* ==========================================================================
+   Quiz Template Suggestion Modal
+   ========================================================================== */
+.qc-template-suggest-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.qc-template-suggest-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qc-template-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.qc-template-badge-mcq {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.qc-template-badge-msq {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.qc-template-badge-rc {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.qc-template-badge-tita {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.qc-template-title {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.qc-template-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 2px;
+}
+

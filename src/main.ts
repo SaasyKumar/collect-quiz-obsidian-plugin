@@ -4,6 +4,8 @@ import { QuizCollectorSettingTab } from "./settings";
 import { QuizModal } from "./components/QuizModal";
 import { parseQuizContent } from "./utils/parser";
 
+import { QuizTemplateSuggestModal, insertQuizTemplate, QUIZ_TEMPLATES } from "./components/QuizTemplateSuggestModal";
+
 export default class QuizCollectorPlugin extends Plugin {
     settings: QuizCollectorSettings = DEFAULT_SETTINGS;
 
@@ -22,6 +24,28 @@ export default class QuizCollectorPlugin extends Plugin {
                 await this.startQuizFromCurrentView(view);
             },
         });
+
+        // Register Command: "Quiz template"
+        // Accessible via Command Palette and Slash Commands ("/quiz template")
+        // Opens a modal with options to choose MCQ, MSQ, RC, TITA
+        this.addCommand({
+            id: "quiz-template",
+            name: "Quiz template",
+            editorCallback: (editor: Editor) => {
+                new QuizTemplateSuggestModal(this.app, editor).open();
+            },
+        });
+
+        // Register specific sub-commands for direct template insertion
+        for (const tmpl of QUIZ_TEMPLATES) {
+            this.addCommand({
+                id: `quiz-template-${tmpl.id}`,
+                name: `Quiz template: ${tmpl.label}`,
+                editorCallback: (editor: Editor) => {
+                    insertQuizTemplate(editor, tmpl.template);
+                },
+            });
+        }
 
         // Register a global workspace command as well
         this.addCommand({
